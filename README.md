@@ -6,20 +6,6 @@
 
 <https://yibodokkiewang.github.io/PV_Curve/>
 
-## 本地运行
-
-双击项目根目录中的 `打开网站.cmd`，它会直接在默认浏览器中打开网页，无需启动服务器。
-
-如需通过 HTTP 访问，也可在 `PV_Curve` 目录中手动执行：
-
-在 `PV_Curve` 目录中执行：
-
-```powershell
-node server.mjs
-```
-
-然后访问 <http://127.0.0.1:4185/>。也可直接打开 `dist/index.html`。
-
 ## 说明
 
 - 支持 1–4 个串联模块、1–4 条并联支路。
