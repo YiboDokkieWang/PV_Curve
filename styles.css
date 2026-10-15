@@ -37,6 +37,25 @@ body,button,input,select,h1,h2,h3,h4,p,span,label,legend,strong,small,output{fon
 @media(min-width:1180px) and (min-height:720px){.topology-fields label{font-size:12px}.metrics article>span{margin-bottom:5px!important}}
 #topbarTagline{font-family:"Times New Roman","SimHei",sans-serif!important;font-weight:700}
 
+/* Figure A uses a fixed 800 x 500 SVG coordinate system and scales as one unit. */
+.array-stage{display:grid;place-items:center;overflow:visible;background:none}
+.array-svg{display:block;width:100%;height:100%;max-width:100%;max-height:100%;overflow:visible;shape-rendering:geometricPrecision}
+.svg-bus,.svg-string-wire{stroke:var(--green);stroke-width:3;stroke-linecap:round}
+.svg-string-wire.inactive{stroke:#aeb6b2}
+.svg-terminal{fill:var(--green)}
+.svg-terminal-label{fill:#fff;font-family:"Times New Roman",serif;font-size:23px;font-weight:700;text-anchor:middle}
+.svg-module{cursor:pointer;touch-action:manipulation}
+.svg-module.inactive{cursor:default;opacity:.18;pointer-events:none;filter:grayscale(1)}
+.svg-module-face{fill:#164f47;stroke:#32776b;stroke-width:3}
+.svg-module:focus{outline:none}
+.svg-module:focus .svg-module-face{stroke:var(--lime);stroke-width:5}
+.svg-module.hot .svg-module-face{stroke:var(--hot);stroke-width:4;filter:drop-shadow(0 0 6px rgba(216,71,63,.35))}
+.svg-cell{stroke:rgba(255,255,255,.32);stroke-width:1}
+.svg-bypass-path{fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.svg-diode-bar{stroke-width:4;stroke-linecap:round}
+.svg-temp-pill{stroke:var(--paper);stroke-width:3}
+.svg-temp-label{fill:#fff;font-family:"Times New Roman","SimSun",serif;font-size:15px;font-weight:700;text-anchor:middle}
+
 /* MPPT-style parameter grouping with distinct low-saturation backgrounds. */
 .electrical-section .module-parameters{padding:6px 7px 3px;background:rgba(102,87,217,.055)}
 .thermal-section .thermal-parameters{padding:6px 7px 3px;background:rgba(14,107,86,.055)}
