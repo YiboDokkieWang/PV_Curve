@@ -1,2 +1,29 @@
-# PV_Curve
-Interactive PV array P–U, I–U and module temperature visualization.
+# PV Curve
+
+光伏阵列 P–U、I–U 与组件温度特性交互可视化网页。
+
+## 在线访问
+
+<https://yibodokkiewang.github.io/PV_Curve/>
+
+## 本地运行
+
+双击项目根目录中的 `打开网站.cmd`，它会直接在默认浏览器中打开网页，无需启动服务器。
+
+如需通过 HTTP 访问，也可在 `PV_Curve` 目录中手动执行：
+
+在 `PV_Curve` 目录中执行：
+
+```powershell
+node server.mjs
+```
+
+然后访问 <http://127.0.0.1:4185/>。也可直接打开 `dist/index.html`。
+
+## 说明
+
+- 支持 1–4 个串联模块、1–4 条并联支路。
+- 所有组件共用同一组 STC 参数，环境温度固定为 25 °C。
+- 可逐块设置 100–1200 W/m² 辐照度，并切换旁路二极管。
+- 页面使用教学用工程近似模型，用于趋势展示，不替代完整单二极管电热耦合仿真。
+
