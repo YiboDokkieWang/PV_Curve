@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="4×4 光伏阵列 P–U、I–U 与组件温度特性可视化实验室">
+  <title>PV·LAB · 看见阴影如何改变光伏阵列特性</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.mppt-base.css"><link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="回到顶部"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span><strong>PV·LAB</strong><small>PV ARRAY CURVE STUDIO</small></span></a>
+    <div class="topbar-tagline" id="topbarTagline">看见阴影如何改变光伏阵列特性</div><button class="language-toggle" id="languageToggle" type="button" aria-label="Switch to English"><strong>中</strong><i></i><span>EN</span></button>
+  </header>
+  <main id="top" class="console-main">
+    <section class="method" aria-label="阵列工况与模型说明">
+      <div class="method-copy">
+        <h2 id="modelHeading">光伏模块等效模型</h2>
+        <div class="algorithm-picker">
+          <select id="modelSelect" aria-label="光伏模块等效数学模型"><option value="single">单二极管五参数模型</option><option value="double">双二极管模型</option><option value="engineering">工程指数模型</option></select>
+        </div>
+      </div>
+      <div class="equation-card"><span id="formulaLabelOne">单二极管等效方程</span><p id="formulaOne">I = I<sub>ph</sub> − I<sub>0</sub>{exp[(U + IR<sub>s</sub>)/(nV<sub>t</sub>)] − 1} − (U + IR<sub>s</sub>)/R<sub>sh</sub></p><span id="formulaLabelTwo">阵列输出功率</span><p id="formulaTwo">I<sub>array</sub>(U) = Σ I<sub>string,k</sub>(U), &nbsp; P(U) = U · I<sub>array</sub>(U)</p></div>
+    </section>
+    <section class="workspace" id="experiment"><div class="lab-layout">
+      <aside class="control-panel" id="controlPanel" aria-label="光伏阵列参数配置">
+        <div class="panel-head"><div><h3 id="parameterHeading">参数配置</h3></div></div>
+        <fieldset class="topology-section"><legend>阵列拓扑</legend><div class="topology-group"><div class="topology-fields">
+          <label><span>每串组件数</span><select id="seriesCount"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label>
+          <label><span>并联支路数</span><select id="parallelCount"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label>
+        </div><label class="bypass-switch"><input id="bypassToggle" type="checkbox" checked><i></i><span><b>旁路二极管</b></span></label></div></fieldset>
+        <section class="parameter-section electrical-section"><h4 id="electricalHeading">每个光伏模块的电气参数</h4><div class="parameter-list module-parameters">
+          <label class="parameter"><span><b>开路电压 V<sub>oc</sub></b><output>V</output></span><input id="voc" type="number" min="10" max="80" step="0.1" value="49.8"></label>
+          <label class="parameter"><span><b>短路电流 I<sub>sc</sub></b><output>A</output></span><input id="isc" type="number" min="1" max="30" step="0.1" value="13.9"></label>
+          <label class="parameter"><span><b>MPP 电压 V<sub>mp</sub></b><output>V</output></span><input id="vmp" type="number" min="5" max="75" step="0.1" value="41.7"></label>
+          <label class="parameter"><span><b>MPP 电流 I<sub>mp</sub></b><output>A</output></span><input id="imp" type="number" min=".5" max="29" step="0.1" value="13.2"></label>
+        </div></section>
+        <section class="parameter-section thermal-section"><h4>热特性参数</h4><div class="parameter-list thermal-parameters">
+          <label class="parameter"><span><b>P<sub>max</sub> 温度系数</b><output>%/°C</output></span><input id="gamma" type="number" min="-1" max="-.1" step=".01" value="-0.35"></label>
+          <label class="parameter"><span><b>额定工作温度</b><output>°C</output></span><input id="ratedTemp" type="number" min="30" max="90" step="1" value="65"></label>
+          <p class="parameter-note">环境温度固定为 25 °C，所有活动组件共用上述参数。</p>
+        </div></section>
+        <section class="parameter-section presets-section"><h4>快速辐照度场景</h4><div class="condition-options preset-buttons"><button data-preset="uniform" class="active">均匀</button><button data-preset="row">行阴影</button><button data-preset="diagonal">对角阴影</button><button data-preset="random">随机云影</button></div></section>
+        <button id="resetParams" class="parameter-reset-button" type="button">恢复默认组件参数</button>
+      </aside>
+      <div class="visualization-area">
+        <div class="metrics"><article><span>阵列结构</span><strong id="metricTopology">4S × 4P</strong></article><article><span>全局最大功率</span><strong id="metricPower">— W</strong></article><article><span>MPP 电压 / 电流</span><strong id="metricMpp">— V / — A</strong></article><article><span>最高组件温度</span><strong id="metricTemp">— °C</strong></article><article><span>阵列状态</span><strong id="metricStatus">计算中</strong></article></div>
+        <article class="chart-card chart-current array-card"><div class="chart-head"><div><span class="chart-number">A</span><h3 id="chartATitle">辐照度与阵列拓扑</h3></div><div class="array-average">☀ <b id="avgIrradiance">1000</b> W/m² <span id="averageLabel">AVERAGE (AVG)</span></div></div><div class="array-stage"><div class="bus bus-top"><span>+</span></div><div id="arrayGrid" class="array-grid"></div><div class="bus bus-bottom"><span>−</span></div></div><div class="irradiance-editor" id="irradianceEditor" hidden><strong id="editorHint">辐照度</strong><input id="irradianceRange" type="range" min="100" max="1200" step="10"><label><input id="irradianceNumber" type="number" min="100" max="1200" step="10"><span>W/m²</span></label></div></article>
+        <article class="chart-card chart-primary"><div class="chart-head"><div><span class="chart-number">B</span><h3 id="chartBTitle">P–U 功率特性</h3></div><div class="legend"><span id="chartBLegend"><i class="power-line"></i>光伏阵列P-U特性曲线</span></div></div><div class="canvas-wrap"><canvas id="puChart"></canvas><div id="puTooltip" class="chart-tooltip"></div></div></article>
+        <article class="chart-card chart-secondary temperature-card"><div class="chart-head"><div><span class="chart-number">C</span><h3 id="chartCTitle">光伏模块实际温度</h3></div><div class="legend"><span id="ambientLegend"><i class="ambient-line"></i>25 °C 环境温度</span><span id="ratedLegend"><i class="rated-line"></i><b id="ratedLabel">65 °C</b> 额定温度</span></div></div><div class="canvas-wrap"><canvas id="tempChart"></canvas><div id="tempTooltip" class="chart-tooltip"></div></div></article>
+        <article class="chart-card chart-output iu-card"><div class="chart-head"><div><span class="chart-number">D</span><h3 id="chartDTitle">I–U 电流特性</h3></div><div class="legend"><span id="chartDLegend"><i class="current-line"></i>光伏阵列I-U特性曲线</span></div></div><div class="canvas-wrap"><canvas id="iuChart"></canvas><div id="iuTooltip" class="chart-tooltip"></div></div></article>
+      </div>
+    </div></section>
+  </main>
+  <footer><span>基于光伏组件连续 I–U 近似模型与稳态热特性估算</span></footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>
+
