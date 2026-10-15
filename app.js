@@ -126,8 +126,8 @@ function svgNode(name,attrs={},text=''){
 
 function renderArray(info){
   const svg=$('#arraySvg'); svg.replaceChildren();
-  const xs=[90,250,410,570],ys=[82,194,306,418],topY=28,bottomY=472,moduleW=108,moduleH=72,bypassOffset=70;
-  const busEnd=650;
+  const xs=[100,260,420,580],ys=[82,194,306,418],topY=28,bottomY=472,moduleW=108,moduleH=72,bypassOffset=70;
+  const busEnd=660;
   svg.append(svgNode('line',{x1:xs[0],y1:topY,x2:busEnd,y2:topY,class:'svg-bus'}));
   svg.append(svgNode('line',{x1:xs[0],y1:bottomY,x2:busEnd,y2:bottomY,class:'svg-bus'}));
   [['+',topY],['−',bottomY]].forEach(([label,y])=>{
