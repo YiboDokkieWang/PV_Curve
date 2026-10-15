@@ -116,26 +116,55 @@ function derive(){
 function moduleColor(g){ const t=clamp((g-100)/1100,0,1); return `hsl(${155-40*(1-t)} ${30+35*t}% ${30+12*t}%)`; }
 function tempColor(t,p){ if(t>p.ratedTemp)return '#d8473f'; if(t>p.ratedTemp-10)return '#ef6c35'; return '#069ca0'; }
 
-function renderArray(info){
-  const grid=$('#arrayGrid'); grid.innerHTML='';
-  for(let branch=0;branch<4;branch++){
-    const col=document.createElement('div'); col.className='string-column'+(branch>=state.parallel?' inactive-string':'');
-    for(let s=0;s<4;s++){
-      const i=branch*4+s, active=branch<state.parallel&&s<state.series, g=state.irradiance[i], t=state.temps[i];
-      const btn=document.createElement('button'); btn.className='module'+(!active?' inactive':'')+(active&&state.bypass?' diode-enabled':'')+(active&&info.bypassed.has(i)?' bypassed':'')+(active&&t>info.p.ratedTemp?' hot':'');
-      btn.style.setProperty('--module-color',moduleColor(g)); btn.style.setProperty('--temp-color',tempColor(t||25,info.p));
-      btn.setAttribute('aria-label',tr(`支路 ${branch+1} 模块 ${s+1}，${g} W/m²`,`String ${branch+1}, module ${s+1}, ${g} W/m²`));
-      btn.innerHTML=`<span class="cells">${'<i></i>'.repeat(9)}</span>${active?`<span class="temp-dot">${Math.round(t)}°C</span>`:''}<span class="bypass-path" aria-hidden="true"><i class="diode-symbol"></i></span>`;
-      if(active)btn.addEventListener('click',()=>openEditor(i,btn)); col.appendChild(btn);
-    }
-    grid.appendChild(col);
-  }
-  const ids=activeIndices(); $('#avgIrradiance').textContent=Math.round(ids.reduce((a,i)=>a+state.irradiance[i],0)/ids.length);
-  requestAnimationFrame(syncArrayWires);
+const SVG_NS='http://www.w3.org/2000/svg';
+function svgNode(name,attrs={},text=''){
+  const node=document.createElementNS(SVG_NS,name);
+  Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));
+  if(text)node.textContent=text;
+  return node;
 }
 
-function syncArrayWires(){
-  const stage=$('.array-stage'),cols=$$('.string-column');if(!stage||!cols.length)return;const sr=stage.getBoundingClientRect(),first=cols[0].getBoundingClientRect(),last=cols[cols.length-1].getBoundingClientRect();stage.style.setProperty('--bus-left',`${first.left+first.width/2-sr.left}px`);stage.style.setProperty('--bus-right',`${Math.max(6,sr.right-(last.left+last.width/2)-24)}px`);
+function renderArray(info){
+  const svg=$('#arraySvg'); svg.replaceChildren();
+  const xs=[90,250,410,570],ys=[82,194,306,418],topY=28,bottomY=472,moduleW=108,moduleH=72,bypassOffset=70;
+  const busEnd=650;
+  svg.append(svgNode('line',{x1:xs[0],y1:topY,x2:busEnd,y2:topY,class:'svg-bus'}));
+  svg.append(svgNode('line',{x1:xs[0],y1:bottomY,x2:busEnd,y2:bottomY,class:'svg-bus'}));
+  [['+',topY],['−',bottomY]].forEach(([label,y])=>{
+    svg.append(svgNode('circle',{cx:busEnd,cy:y,r:16,class:'svg-terminal'}));
+    svg.append(svgNode('text',{x:busEnd,y:Number(y)+6,class:'svg-terminal-label'},label));
+  });
+  for(let branch=0;branch<4;branch++){
+    const x=xs[branch],stringActive=branch<state.parallel;
+    svg.append(svgNode('line',{x1:x,y1:topY,x2:x,y2:bottomY,class:'svg-string-wire'+(stringActive?'':' inactive')}));
+    for(let s=0;s<4;s++){
+      const i=branch*4+s, active=branch<state.parallel&&s<state.series, g=state.irradiance[i], t=state.temps[i];
+      const y=ys[s],bypassed=active&&info.bypassed.has(i),hot=active&&t>info.p.ratedTemp;
+      const group=svgNode('g',{class:'svg-module'+(active?'':' inactive')+(hot?' hot':''),'data-module-index':i,role:'button',tabindex:active?'0':'-1','aria-label':tr(`支路 ${branch+1} 模块 ${s+1}，${g} W/m²`,`String ${branch+1}, module ${s+1}, ${g} W/m²`)});
+      const diodeX=x+bypassOffset,diodeColor=!state.bypass?'#9aa59f':bypassed?'#ef6c35':'#0e6b56';
+      if(active){
+        group.append(svgNode('path',{d:`M ${x} ${y-moduleH/2} H ${diodeX} V ${y+moduleH/2} H ${x}`,class:'svg-bypass-path',stroke:diodeColor}));
+        group.append(svgNode('polygon',{points:`${diodeX-9},${y+9} ${diodeX+9},${y+9} ${diodeX},${y-7}`,class:'svg-diode-triangle',fill:diodeColor}));
+        group.append(svgNode('line',{x1:diodeX-10,y1:y-12,x2:diodeX+10,y2:y-12,class:'svg-diode-bar',stroke:diodeColor}));
+      }
+      const face=svgNode('rect',{x:x-moduleW/2,y:y-moduleH/2,width:moduleW,height:moduleH,rx:4,class:'svg-module-face'});
+      group.append(face);
+      const pad=7,gap=3,cellW=(moduleW-pad*2-gap*2)/3,cellH=(moduleH-pad*2-gap*2)/3;
+      for(let row=0;row<3;row++)for(let col=0;col<3;col++)group.append(svgNode('rect',{x:x-moduleW/2+pad+col*(cellW+gap),y:y-moduleH/2+pad+row*(cellH+gap),width:cellW,height:cellH,rx:1,class:'svg-cell',fill:active?moduleColor(g):'#6e7a75'}));
+      if(active){
+        const pillX=x-moduleW/2-42,pillY=y-moduleH/2-12;
+        group.append(svgNode('rect',{x:pillX,y:pillY,width:52,height:26,rx:13,class:'svg-temp-pill',fill:tempColor(t||25,info.p)}));
+        group.append(svgNode('text',{x:pillX+26,y:pillY+18,class:'svg-temp-label'},`${Math.round(t)}°C`));
+        const activate=()=>openEditor(i,face);
+        group.addEventListener('click',activate);
+        group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
+      }
+      svg.append(group);
+    }
+  }
+  const ids=activeIndices(); $('#avgIrradiance').textContent=Math.round(ids.reduce((a,i)=>a+state.irradiance[i],0)/ids.length);
+  const editor=$('#irradianceEditor');
+  if(state.selected!==null&&!editor.hidden)requestAnimationFrame(()=>{const face=svg.querySelector(`[data-module-index="${state.selected}"] .svg-module-face`);if(face)positionEditor(face);});
 }
 
 function niceMax(v){ const pow=Math.pow(10,Math.floor(Math.log10(Math.max(v,1)))); return Math.ceil(v/pow/2)*2*pow; }
@@ -174,10 +203,11 @@ function render(){
   drawLineChart($('#puChart'),state.points,'p','#ef6c35',tr('PV阵列功率 P (W)','PV Array Power P (W)') ,$('#puTooltip'));drawLineChart($('#iuChart'),state.points,'i','#6657d9',tr('PV阵列电流 I (A)','PV Array Current I (A)') ,$('#iuTooltip'));drawTemps($('#tempChart'),info.p);
 }
 
-function openEditor(i,moduleEl){state.selected=i;const editor=$('#irradianceEditor'),card=$('.array-card'),mr=moduleEl.getBoundingClientRect(),cr=card.getBoundingClientRect(),half=120;editor.hidden=false;editor.style.left=`${clamp(mr.left+mr.width/2-cr.left,half+6,cr.width-half-6)}px`;editor.style.top=`${mr.top-cr.top-7}px`;$('#editorHint').textContent=tr('辐照度','Irradiance');$('#irradianceRange').value=$('#irradianceNumber').value=state.irradiance[i]}
+function positionEditor(moduleEl){const editor=$('#irradianceEditor'),card=$('.array-card'),mr=moduleEl.getBoundingClientRect(),cr=card.getBoundingClientRect(),half=Math.max(100,editor.offsetWidth/2);editor.style.left=`${clamp(mr.left+mr.width/2-cr.left,half+6,cr.width-half-6)}px`;editor.style.top=`${mr.top-cr.top-7}px`}
+function openEditor(i,moduleEl){state.selected=i;const editor=$('#irradianceEditor');editor.hidden=false;positionEditor(moduleEl);$('#editorHint').textContent=tr('辐照度','Irradiance');$('#irradianceRange').value=$('#irradianceNumber').value=state.irradiance[i]}
 function setSelected(v){if(state.selected===null)return;state.irradiance[state.selected]=clamp(Number(v)||100,100,1200);$('#irradianceRange').value=$('#irradianceNumber').value=state.irradiance[state.selected];$$('.preset-buttons button').forEach(b=>b.classList.remove('active'));render()}
-$('#irradianceRange').addEventListener('input',e=>setSelected(e.target.value));$('#irradianceNumber').addEventListener('change',e=>setSelected(e.target.value));
-document.addEventListener('pointerdown',e=>{const editor=$('#irradianceEditor');if(!editor.hidden&&!editor.contains(e.target)&&!e.target.closest('.module'))editor.hidden=true});
+$('#irradianceRange').addEventListener('input',e=>setSelected(e.target.value));$('#irradianceNumber').addEventListener('input',e=>setSelected(e.target.value));
+document.addEventListener('pointerdown',e=>{const editor=$('#irradianceEditor');if(!editor.hidden&&!editor.contains(e.target)&&!e.target.closest('.svg-module'))editor.hidden=true});
 $('#seriesCount').addEventListener('change',e=>{state.series=Number(e.target.value);state.selected=null;$('#irradianceEditor').hidden=true;render()});$('#parallelCount').addEventListener('change',e=>{state.parallel=Number(e.target.value);state.selected=null;$('#irradianceEditor').hidden=true;render()});
 $('#bypassToggle').addEventListener('change',e=>{state.bypass=e.target.checked;render()});
 Object.values(controls).forEach(el=>el.addEventListener('input',()=>{enforceElectricalBounds();render()}));$('#resetParams').addEventListener('click',()=>{for(const k in controls)controls[k].value=defaults[k];enforceElectricalBounds();render()});
