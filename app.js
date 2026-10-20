@@ -1,13 +1,13 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
-const state = { series: 4, parallel: 4, bypass: true, model: 'single', language: 'zh', irradiance: Array(16).fill(1000), selected: null, points: [], temps: [] };
+const state = { series: 4, parallel: 4, bypass: true, model: 'single', language: 'en', irradiance: Array(16).fill(1000), selected: null, points: [], temps: [] };
 const defaults = { voc: 49.8, isc: 13.9, vmp: 41.7, imp: 13.2, gamma: -0.35, ratedTemp: 65 };
 const controls = Object.fromEntries(Object.keys(defaults).map(k => [k, $('#' + k)]));
 const tr = (zh,en) => state.language === 'zh' ? zh : en;
 const modelContent = {
-  single:{zh:'单二极管五参数模型',en:'Single-Diode Five-Parameter Model',labelZh:'单二极管等效方程',labelEn:'Single-diode equivalent equation',formula:'I = I<sub>ph</sub> − I<sub>0</sub>{exp[(U + IR<sub>s</sub>)/(nV<sub>t</sub>)] − 1} − (U + IR<sub>s</sub>)/R<sub>sh</sub>'},
-  double:{zh:'双二极管模型',en:'Double-Diode Model',labelZh:'双二极管等效方程',labelEn:'Double-diode equivalent equation',formula:'I = I<sub>ph</sub> − I<sub>01</sub>(e<sup>x₁</sup> − 1) − I<sub>02</sub>(e<sup>x₂</sup> − 1) − (U + IR<sub>s</sub>)/R<sub>sh</sub>'},
-  engineering:{zh:'工程指数模型',en:'Engineering Exponential Model',labelZh:'工程指数近似方程',labelEn:'Engineering exponential approximation',formula:'I(U) = I<sub>sc</sub>[1 − (U/U<sub>oc</sub>)<sup>κ</sup>], &nbsp; κ = ln(1 − I<sub>mp</sub>/I<sub>sc</sub>)/ln(V<sub>mp</sub>/V<sub>oc</sub>)'}
+  single:{zh:'单二极管五参数模型',en:'Single-Diode Five-Parameter Model',labelZh:'单二极管等效方程',labelEn:'Single-diode equivalent equation',formula:'I = I<sub>ph</sub> − I<sub>0</sub>{exp[(U + IR<sub>s</sub>)/(nV<sub>t</sub>)] − 1}<wbr> − (U + IR<sub>s</sub>)/R<sub>sh</sub>'},
+  double:{zh:'双二极管模型',en:'Double-Diode Model',labelZh:'双二极管等效方程',labelEn:'Double-diode equivalent equation',formula:'I = I<sub>ph</sub> − I<sub>01</sub>(e<sup>x₁</sup> − 1)<wbr> − I<sub>02</sub>(e<sup>x₂</sup> − 1)<wbr> − (U + IR<sub>s</sub>)/R<sub>sh</sub>'},
+  engineering:{zh:'工程指数模型',en:'Engineering Exponential Model',labelZh:'工程指数近似方程',labelEn:'Engineering exponential approximation',formula:'I(U) = I<sub>sc</sub>[1 − (U/U<sub>oc</sub>)<sup>κ</sup>],<wbr> &nbsp; κ = ln(1 − I<sub>mp</sub>/I<sub>sc</sub>)<wbr>/ln(V<sub>mp</sub>/V<sub>oc</sub>)'}
 };
 
 function updateModelFormula(){
@@ -20,6 +20,7 @@ function updateLanguage(){
   document.documentElement.lang=state.language==='zh'?'zh-CN':'en';document.body.classList.toggle('lang-en',state.language==='en');
   document.title=tr('PV·LAB · 看见阴影如何改变光伏阵列特性','PV·LAB · See How Shading Changes PV Array Characteristics');
   const set=(s,zh,en)=>{const el=$(s);if(el)el.textContent=tr(zh,en)};
+  $('.brand').setAttribute('aria-label',tr('回到顶部','Back to top'));$('.method').setAttribute('aria-label',tr('光伏模块模型与方程','PV module model and equations'));$('#modelSelect').setAttribute('aria-label',tr('光伏模块等效数学模型','PV module equivalent mathematical model'));$('#controlPanel').setAttribute('aria-label',tr('光伏阵列参数配置','PV array parameter configuration'));
   set('#topbarTagline','看见阴影如何改变光伏阵列特性','See How Shading Changes PV Array Characteristics');set('#modelHeading','光伏模块等效模型','PV Module Equivalent Model');set('#parameterHeading','参数配置','Parameter Configuration');set('#electricalHeading','每个光伏模块的电气参数','Electrical Parameters of Each PV Module');
   const opts=$$('#modelSelect option');Object.values(modelContent).forEach((m,i)=>opts[i].textContent=state.language==='zh'?m.zh:m.en);
   const fieldLabels=$$('.topology-fields label>span');if(fieldLabels[0])fieldLabels[0].textContent=tr('每串模块数','Modules per String');if(fieldLabels[1])fieldLabels[1].textContent=tr('并联支路数','Parallel Strings');
@@ -30,7 +31,7 @@ function updateLanguage(){
   const metricLabels=$$('.metrics article>span');const mz=['阵列结构','全局最大功率','MPP 电压 / 电流','最高模块温度','阵列状态'],me=['Array Topology','Global Maximum Power','MPP Voltage / Current','Highest Module Temperature','Array Status'];metricLabels.forEach((el,i)=>el.textContent=state.language==='zh'?mz[i]:me[i]);
   set('#chartATitle','辐照度与阵列拓扑','Irradiance & Array Topology');set('#chartBTitle','P–U 功率特性','P–U Power Characteristic');set('#chartCTitle','光伏模块实际温度','Actual PV Module Temperature');set('#chartDTitle','I–U 电流特性','I–U Current Characteristic');set('#averageLabel','平均辐照度 (AVG)','AVERAGE IRRADIANCE (AVG)');
   $('#chartBLegend').innerHTML='<i class="power-line"></i>'+tr('光伏阵列P-U特性曲线','PV Array P–U Characteristic');$('#chartDLegend').innerHTML='<i class="current-line"></i>'+tr('光伏阵列I-U特性曲线','PV Array I–U Characteristic');$('#ambientLegend').innerHTML='<i class="ambient-line"></i>25 °C '+tr('环境温度','Ambient Temperature');$('#ratedLegend').innerHTML='<i class="rated-line"></i><b id="ratedLabel">'+params().ratedTemp+' °C</b> '+tr('额定温度','Rated Temperature');
-  $('.parameter-note').textContent=tr('环境温度固定为 25 °C，所有PV模块共用该环境温度参数。','Ambient temperature is fixed at 25 °C; all PV modules share this ambient-temperature parameter.');$('#resetParams').textContent=tr('恢复默认模块参数','Restore Default Module Parameters');
+  $('.parameter-note').textContent=tr('环境温度固定为 25 °C，所有PV模块共用该环境温度参数。','Ambient temperature is fixed at 25 °C; all PV modules share this ambient-temperature parameter.');$('#resetParams').innerHTML='<span aria-hidden="true">↺</span><span>'+tr('恢复默认模块参数','Restore Default Module Parameters')+'</span>';$('#downloadData').textContent=tr('↓ 下载运行数据 CSV','↓ Download Run Data CSV');
   const presetText=state.language==='zh'?['均匀','行阴影','对角阴影','随机云影']:['Uniform','Row Shade','Diagonal Shade','Random Cloud'];$$('[data-preset]').forEach((b,i)=>b.textContent=presetText[i]);
   $('footer span').textContent=tr('基于光伏模块连续 I–U 模型与稳态热特性估算','Continuous PV module I–U models with steady-state thermal estimation');
   $('#languageToggle').innerHTML=state.language==='zh'?'<strong>中</strong><i></i><span>EN</span>':'<strong>EN</strong><i></i><span>中</span>';$('#languageToggle').setAttribute('aria-label',tr('Switch to English','切换到中文'));
@@ -203,6 +204,42 @@ function render(){
   drawLineChart($('#puChart'),state.points,'p','#ef6c35',tr('PV阵列功率 P (W)','PV Array Power P (W)') ,$('#puTooltip'));drawLineChart($('#iuChart'),state.points,'i','#6657d9',tr('PV阵列电流 I (A)','PV Array Current I (A)') ,$('#iuTooltip'));drawTemps($('#tempChart'),info.p);
 }
 
+function downloadCsv(){
+  const info=derive(), activeSet=new Set(activeIndices());
+  const rows=[
+    ['PV Array Curve Studio'],
+    ['Exported At',new Date().toISOString()],
+    ['Equivalent Model',modelContent[state.model].en],
+    ['Modules per String',state.series],
+    ['Parallel Strings',state.parallel],
+    ['Bypass Diodes',state.bypass?'Enabled':'Disabled'],
+    ['Open-circuit Voltage Voc (V)',info.p.voc],
+    ['Short-circuit Current Isc (A)',info.p.isc],
+    ['MPP Voltage Vmp (V)',info.p.vmp],
+    ['MPP Current Imp (A)',info.p.imp],
+    ['Pmax Temperature Coefficient (%/C)',info.p.gamma],
+    ['Rated Operating Temperature (C)',info.p.ratedTemp],
+    [],
+    ['Curve Data'],
+    ['PV Array Voltage (V)','PV Array Current (A)','PV Array Power (W)'],
+    ...state.points.map(point=>[point.v.toFixed(4),point.i.toFixed(4),point.p.toFixed(4)]),
+    [],
+    ['PV Module Data'],
+    ['PV Module','Active','Irradiance (W/m2)','Actual Temperature (C)','Bypass Diode Conducting'],
+    ...Array.from({length:16},(_,index)=>[
+      `PV${index+1}`,
+      activeSet.has(index)?'Yes':'No',
+      activeSet.has(index)?state.irradiance[index]:'',
+      activeSet.has(index)&&Number.isFinite(state.temps[index])?state.temps[index].toFixed(2):0,
+      activeSet.has(index)&&info.bypassed.has(index)?'Yes':'No'
+    ])
+  ];
+  const csvValue=value=>{const text=String(value??'');return /[",\r\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text};
+  const blob=new Blob(['\uFEFF'+rows.map(row=>row.map(csvValue).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='pv-array-curve-data.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),0);
+}
+
 function positionEditor(moduleEl){const editor=$('#irradianceEditor'),card=$('.array-card'),mr=moduleEl.getBoundingClientRect(),cr=card.getBoundingClientRect(),half=Math.max(100,editor.offsetWidth/2);editor.style.left=`${clamp(mr.left+mr.width/2-cr.left,half+6,cr.width-half-6)}px`;editor.style.top=`${mr.top-cr.top-7}px`}
 function openEditor(i,moduleEl){state.selected=i;const editor=$('#irradianceEditor');editor.hidden=false;positionEditor(moduleEl);$('#editorHint').textContent=tr('辐照度','Irradiance');$('#irradianceRange').value=$('#irradianceNumber').value=state.irradiance[i]}
 function setSelected(v){if(state.selected===null)return;state.irradiance[state.selected]=clamp(Number(v)||100,100,1200);$('#irradianceRange').value=$('#irradianceNumber').value=state.irradiance[state.selected];$$('.preset-buttons button').forEach(b=>b.classList.remove('active'));render()}
@@ -211,6 +248,7 @@ document.addEventListener('pointerdown',e=>{const editor=$('#irradianceEditor');
 $('#seriesCount').addEventListener('change',e=>{state.series=Number(e.target.value);state.selected=null;$('#irradianceEditor').hidden=true;render()});$('#parallelCount').addEventListener('change',e=>{state.parallel=Number(e.target.value);state.selected=null;$('#irradianceEditor').hidden=true;render()});
 $('#bypassToggle').addEventListener('change',e=>{state.bypass=e.target.checked;render()});
 Object.values(controls).forEach(el=>el.addEventListener('input',()=>{enforceElectricalBounds();render()}));$('#resetParams').addEventListener('click',()=>{for(const k in controls)controls[k].value=defaults[k];enforceElectricalBounds();render()});
+$('#downloadData').addEventListener('click',downloadCsv);
 const presets={uniform:()=>Array(16).fill(1000),row:()=>Array.from({length:16},(_,i)=>i%4===2?280:1000),diagonal:()=>Array.from({length:16},(_,i)=>i%4===Math.floor(i/4)?350:1000),random:()=>Array.from({length:16},()=>Math.round((250+Math.random()*750)/10)*10)};
 function applyPreset(name){state.irradiance=presets[name]();$$('[data-preset]').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));render()}
 $$('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>applyPreset(btn.dataset.preset)));
