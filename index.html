@@ -1,28 +1,31 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="4×4 光伏阵列 P–U、I–U 与组件温度特性可视化实验室">
-  <title>PV·LAB · 看见阴影如何改变光伏阵列特性</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.mppt-base.css"><link rel="stylesheet" href="./styles.css?v=20261015-svg2">
+  <meta name="description" content="Interactive visualization of P–U, I–U, and module-temperature characteristics for PV arrays up to 4×4.">
+  <title>PV·LAB · See How Shading Changes PV Array Characteristics</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.mppt-base.css"><link rel="stylesheet" href="./styles.css?v=20261020-responsive-formulas">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="回到顶部"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span><strong>PV·LAB</strong><small>PV ARRAY CURVE STUDIO</small></span></a>
-    <div class="topbar-tagline" id="topbarTagline">看见阴影如何改变光伏阵列特性</div><button class="language-toggle" id="languageToggle" type="button" aria-label="Switch to English"><strong>中</strong><i></i><span>EN</span></button>
+    <a class="brand" href="#top" aria-label="Back to top"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span><span><strong>PV·LAB</strong><small>PV ARRAY CURVE STUDIO</small></span></a>
+    <div class="topbar-tagline" id="topbarTagline">See How Shading Changes PV Array Characteristics</div><button class="language-toggle" id="languageToggle" type="button" aria-label="切换到中文"><strong>EN</strong><i></i><span>中</span></button>
   </header>
   <main id="top" class="console-main">
-    <section class="method" aria-label="阵列工况与模型说明">
+    <section class="method" aria-label="PV module model and equations">
       <div class="method-copy">
         <h2 id="modelHeading">光伏模块等效模型</h2>
         <div class="algorithm-picker">
-          <select id="modelSelect" aria-label="光伏模块等效数学模型"><option value="single">单二极管五参数模型</option><option value="double">双二极管模型</option><option value="engineering">工程指数模型</option></select>
+          <select id="modelSelect" aria-label="PV module equivalent mathematical model"><option value="single">Single-Diode Five-Parameter Model</option><option value="double">Double-Diode Model</option><option value="engineering">Engineering Exponential Model</option></select>
         </div>
       </div>
-      <div class="equation-card"><span id="formulaLabelOne">单二极管等效方程</span><p id="formulaOne">I = I<sub>ph</sub> − I<sub>0</sub>{exp[(U + IR<sub>s</sub>)/(nV<sub>t</sub>)] − 1} − (U + IR<sub>s</sub>)/R<sub>sh</sub></p><span id="formulaLabelTwo">阵列输出功率</span><p id="formulaTwo">I<sub>array</sub>(U) = Σ I<sub>string,k</sub>(U), &nbsp; P(U) = U · I<sub>array</sub>(U)</p></div>
+      <div class="equation-card">
+        <section class="equation-item" aria-labelledby="formulaLabelOne"><span id="formulaLabelOne">Single-diode equivalent equation</span><p id="formulaOne">I = I<sub>ph</sub> − I<sub>0</sub>{exp[(U + IR<sub>s</sub>)/(nV<sub>t</sub>)] − 1}<wbr> − (U + IR<sub>s</sub>)/R<sub>sh</sub></p></section>
+        <section class="equation-item" aria-labelledby="formulaLabelTwo"><span id="formulaLabelTwo">PV array output power</span><p id="formulaTwo">I<sub>array</sub>(U) = Σ I<sub>string,k</sub>(U),<wbr> &nbsp; P(U) = U · I<sub>array</sub>(U)</p></section>
+      </div>
     </section>
     <section class="workspace" id="experiment"><div class="lab-layout">
-      <aside class="control-panel" id="controlPanel" aria-label="光伏阵列参数配置">
+      <aside class="control-panel" id="controlPanel" aria-label="PV array parameter configuration">
         <div class="panel-head"><div><h3 id="parameterHeading">参数配置</h3></div></div>
         <fieldset class="topology-section"><legend>阵列拓扑</legend><div class="topology-group"><div class="topology-fields">
           <label><span>每串组件数</span><select id="seriesCount"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label>
@@ -40,7 +43,8 @@
           <p class="parameter-note">环境温度固定为 25 °C，所有活动组件共用上述参数。</p>
         </div></section>
         <section class="parameter-section presets-section"><h4>快速辐照度场景</h4><div class="condition-options preset-buttons"><button data-preset="uniform" class="active">均匀</button><button data-preset="row">行阴影</button><button data-preset="diagonal">对角阴影</button><button data-preset="random">随机云影</button></div></section>
-        <button id="resetParams" class="parameter-reset-button" type="button">恢复默认组件参数</button>
+        <button id="resetParams" class="parameter-reset-button" type="button"><span aria-hidden="true">↺</span><span>Restore Default Module Parameters</span></button>
+        <button id="downloadData" class="text-button" type="button">↓ Download Run Data CSV</button>
       </aside>
       <div class="visualization-area">
         <div class="metrics"><article><span>阵列结构</span><strong id="metricTopology">4S × 4P</strong></article><article><span>全局最大功率</span><strong id="metricPower">— W</strong></article><article><span>MPP 电压 / 电流</span><strong id="metricMpp">— V / — A</strong></article><article><span>最高组件温度</span><strong id="metricTemp">— °C</strong></article><article><span>阵列状态</span><strong id="metricStatus">计算中</strong></article></div>
@@ -52,7 +56,7 @@
     </div></section>
   </main>
   <footer><span>基于光伏组件连续 I–U 近似模型与稳态热特性估算</span></footer>
-  <script src="./app.js?v=20261015-svg2" defer></script>
+  <script src="./app.js?v=20261020-responsive-formulas" defer></script>
 </body>
 </html>
 
